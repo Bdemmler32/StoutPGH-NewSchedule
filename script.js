@@ -25,46 +25,76 @@ const categoryStyles = {
 // Days of the week
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// DOM Elements
-const locationButtonsContainer = document.getElementById('location-buttons');
-const programButtonsContainer = document.getElementById('program-buttons');
-const scheduleGrid = document.getElementById('schedule-grid');
-const errorMessage = document.getElementById('error-message');
-const lastUpdated = document.getElementById('last-updated');
-const refreshButton = document.getElementById('refresh-button');
-const expandCollapseToggle = document.getElementById('expandCollapseToggle');
+// DOM Elements - with error checking
+const locationButtonsContainer = document.getElementById('location-buttons') || document.createElement('div');
+const programButtonsContainer = document.getElementById('program-buttons') || document.createElement('div');
+const scheduleGrid = document.getElementById('schedule-grid') || document.createElement('div');
+const errorMessage = document.getElementById('error-message') || document.createElement('div');
+const lastUpdated = document.getElementById('last-updated') || document.createElement('div');
+const refreshButton = document.getElementById('refresh-button') || document.createElement('button');
+const expandCollapseToggle = document.getElementById('expandCollapseToggle') || document.createElement('input');
+
+// Check for missing elements and show console warnings
+if (!document.getElementById('location-buttons')) console.warn('Missing element: location-buttons');
+if (!document.getElementById('program-buttons')) console.warn('Missing element: program-buttons');
+if (!document.getElementById('schedule-grid')) console.warn('Missing element: schedule-grid');
+if (!document.getElementById('error-message')) console.warn('Missing element: error-message');
+if (!document.getElementById('last-updated')) console.warn('Missing element: last-updated');
+if (!document.getElementById('refresh-button')) console.warn('Missing element: refresh-button');
+if (!document.getElementById('expandCollapseToggle')) console.warn('Missing element: expandCollapseToggle');
 
 // Initialize application
 function init() {
-  // Create day headers for the schedule grid
-  createDayHeaders();
-  
-  // Fetch data
-  fetchData();
-  
-  // Set up refresh button
-  refreshButton.addEventListener('click', fetchData);
-  
-  // Set up expand/collapse toggle
-  expandCollapseToggle.addEventListener('change', function() {
-    const allEvents = document.querySelectorAll('.class-card');
+  try {
+    // Make sure the schedule grid exists
+    if (!document.getElementById('schedule-grid')) {
+      console.error('Required element #schedule-grid not found in the document');
+      alert('Error initializing application: Schedule grid element not found.');
+      return;
+    }
     
-    if (this.checked) {
-      // Expand all events
-      allEvents.forEach(event => {
-        event.classList.add('expanded');
-      });
-    } else {
-      // Collapse all events
-      allEvents.forEach(event => {
-        event.classList.remove('expanded');
+    // Create day headers for the schedule grid
+    createDayHeaders();
+    
+    // Fetch data
+    fetchData();
+    
+    // Set up refresh button
+    if (refreshButton) {
+      refreshButton.addEventListener('click', fetchData);
+    }
+    
+    // Set up expand/collapse toggle
+    if (expandCollapseToggle && expandCollapseToggle.tagName === 'INPUT') {
+      expandCollapseToggle.addEventListener('change', function() {
+        const allEvents = document.querySelectorAll('.class-card');
+        
+        if (this.checked) {
+          // Expand all events
+          allEvents.forEach(event => {
+            event.classList.add('expanded');
+          });
+        } else {
+          // Collapse all events
+          allEvents.forEach(event => {
+            event.classList.remove('expanded');
+          });
+        }
       });
     }
-  });
-  
-  // Check for responsive layout changes
-  window.addEventListener('resize', checkResponsiveLayout);
-  checkResponsiveLayout(); // Initial check
+    
+    // Check for responsive layout changes
+    window.addEventListener('resize', checkResponsiveLayout);
+    checkResponsiveLayout(); // Initial check
+  } catch (error) {
+    console.error('Error initializing application:', error);
+    if (errorMessage) {
+      errorMessage.textContent = 'Error initializing application: ' + error.message;
+      errorMessage.classList.add('visible');
+    } else {
+      alert('Error initializing application: ' + error.message);
+    }
+  }
 }
 
 // Create day headers for the schedule grid
@@ -117,10 +147,12 @@ function checkResponsiveLayout() {
 
 // Fetch data from Excel file
 async function fetchData() {
-  // Show loading state
-  errorMessage.classList.remove('visible');
-  
   try {
+    // Show loading state
+    if (errorMessage) {
+      errorMessage.classList.remove('visible');
+    }
+    
     // Try different file paths
     const filePaths = [
       './StoutPGH_Schedule.xlsx',
@@ -131,76 +163,113 @@ async function fetchData() {
     
     let excelData = null;
     let pathIndex = 0;
+    let errorsList = [];
     
     // Try each path until one works
     while (excelData === null && pathIndex < filePaths.length) {
       try {
+        console.log(`Attempting to load from: ${filePaths[pathIndex]}`);
         const response = await fetch(filePaths[pathIndex]);
         if (response.ok) {
           excelData = await response.arrayBuffer();
           console.log(`Successfully loaded data from: ${filePaths[pathIndex]}`);
         } else {
+          errorsList.push(`HTTP ${response.status} from ${filePaths[pathIndex]}`);
           pathIndex++;
         }
       } catch (error) {
         console.error(`Failed to load from ${filePaths[pathIndex]}:`, error);
+        errorsList.push(`${error.message} from ${filePaths[pathIndex]}`);
         pathIndex++;
       }
     }
     
     if (excelData === null) {
-      throw new Error('Could not find the Excel file in any of the attempted locations.');
+      throw new Error(`Could not find the Excel file. Tried: ${errorsList.join(', ')}`);
     }
     
     // Parse Excel data using SheetJS
+    console.log('Parsing Excel data...');
     const workbook = XLSX.read(new Uint8Array(excelData), {
       type: 'array',
       cellDates: true,
       cellStyles: true
     });
     
+    console.log('Available sheets:', workbook.SheetNames);
+    
     // Get the first sheet
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     
     // Convert to JSON
+    console.log('Converting worksheet to JSON...');
     const jsonData = XLSX.utils.sheet_to_json(worksheet, {
       raw: true,
-      dateNF: 'yyyy-mm-dd'
+      dateNF: 'yyyy-mm-dd',
+      defval: '' // Default value for empty cells
     });
+    
+    console.log('JSON data from Excel:', jsonData.slice(0, 2)); // Log first two items
     
     // Process the data
     processData(jsonData);
     
   } catch (error) {
-    showError('Error loading the schedule: ' + error.message);
     console.error('Error fetching data:', error);
+    showError('Error loading the schedule: ' + error.message);
   }
 }
 
 // Process the loaded data
 function processData(data) {
-  // Save the class data
-  classes = data;
-  
-  // Extract unique locations
-  locations = [...new Set(data
-    .filter(item => item.Location && item.Location.trim() !== '')
-    .map(item => item.Location))];
-  
-  // Set initial selected location to Strip District, if available
-  if (selectedLocations.length === 0) {
-    const stripDistrict = locations.find(loc => loc === 'Strip District');
-    selectedLocations = stripDistrict ? [stripDistrict] : locations.length > 0 ? [locations[0]] : [];
+  try {
+    console.log('Raw data from Excel:', data);
+    
+    // Clean and normalize the data
+    classes = data.map(item => {
+      // Create a new object with default values for all properties
+      const cleanItem = {
+        Class: item.Class || 'Unknown Class',
+        Discipline: item.Discipline || '',
+        Day: item.Day || 'Unknown',
+        Time: item.Time || '',
+        Location: item.Location || 'Unknown',
+        'Gi / No Gi': item['Gi / No Gi'] || '',
+        Details: item.Details || ''
+      };
+      return cleanItem;
+    });
+    
+    console.log('Processed class data:', classes);
+    
+    // Extract unique locations - handle potential nulls
+    locations = [...new Set(classes
+      .filter(item => item.Location && item.Location.trim() !== '')
+      .map(item => item.Location))];
+    
+    console.log('Available locations:', locations);
+    
+    // Set initial selected location to Strip District, if available
+    if (selectedLocations.length === 0) {
+      const stripDistrict = locations.find(loc => loc === 'Strip District');
+      selectedLocations = stripDistrict ? [stripDistrict] : locations.length > 0 ? [locations[0]] : [];
+      console.log('Initial selected locations:', selectedLocations);
+    }
+    
+    // Update last updated timestamp
+    if (lastUpdated) {
+      lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
+    
+    // Render UI components
+    renderLocationButtons();
+    renderProgramButtons();
+    renderSchedule();
+  } catch (error) {
+    console.error('Error processing data:', error);
+    showError('Error processing data: ' + error.message);
   }
-  
-  // Update last updated timestamp
-  lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-  
-  // Render UI components
-  renderLocationButtons();
-  renderProgramButtons();
-  renderSchedule();
 }
 
 // Render location filter buttons
@@ -278,13 +347,19 @@ function isClassVisible(classItem) {
 
 // Get the CSS class for category styling
 function getCategoryClass(classItem) {
+  if (!classItem || !classItem.Discipline) {
+    return '';
+  }
+  
   let categoryClass = '';
   
   Object.entries(programMap).forEach(([program, disciplines]) => {
-    const isMatch = disciplines.some(discipline => 
-      classItem.Discipline === discipline || 
-      (typeof classItem.Discipline === 'string' && classItem.Discipline.includes(discipline))
-    );
+    const isMatch = disciplines.some(discipline => {
+      if (!classItem.Discipline) return false;
+      
+      return classItem.Discipline === discipline || 
+        (typeof classItem.Discipline === 'string' && classItem.Discipline.includes(discipline));
+    });
     
     if (isMatch) {
       categoryClass = categoryStyles[program] || '';
@@ -464,55 +539,77 @@ function renderResponsiveSchedule() {
 
 // Create a class card element
 function createClassCard(classItem) {
-  const card = document.createElement('div');
-  card.className = `class-card ${getCategoryClass(classItem)}`;
-  
-  // Time
-  const timeElem = document.createElement('div');
-  timeElem.className = 'class-time';
-  
-  const clockIcon = document.createElement('span');
-  clockIcon.className = 'clock-icon';
-  timeElem.appendChild(clockIcon);
-  
-  const timeText = document.createElement('span');
-  timeText.textContent = formatTime(classItem.Time);
-  timeElem.appendChild(timeText);
-  
-  // Class name
-  const nameElem = document.createElement('div');
-  nameElem.className = 'class-name';
-  nameElem.textContent = classItem.Class;
-  
-  // Location
-  const locationElem = document.createElement('div');
-  locationElem.className = 'class-location';
-  locationElem.textContent = classItem.Location;
-  
-  // Add main elements to card
-  card.appendChild(timeElem);
-  card.appendChild(nameElem);
-  card.appendChild(locationElem);
-  
-  // Add detailed information section (initially hidden)
-  const detailsElem = document.createElement('div');
-  detailsElem.className = 'class-details';
-  
-  // Add detailed information
-  const detailsHTML = `
-    <div><strong>Discipline:</strong> ${classItem.Discipline || 'Not specified'}</div>
-    ${classItem['Gi / No Gi'] ? `<div><strong>Gi/NoGi:</strong> ${classItem['Gi / No Gi']}</div>` : ''}
-    ${classItem.Details ? `<div><strong>Details:</strong> ${classItem.Details}</div>` : ''}
-  `;
-  detailsElem.innerHTML = detailsHTML;
-  card.appendChild(detailsElem);
-  
-  // Add click event for expand/collapse
-  card.addEventListener('click', function() {
-    this.classList.toggle('expanded');
-  });
-  
-  return card;
+  try {
+    // Validate the input
+    if (!classItem) {
+      console.warn('Attempted to create class card with null/undefined item');
+      return document.createElement('div'); // Return empty div
+    }
+    
+    const card = document.createElement('div');
+    card.className = `class-card ${getCategoryClass(classItem)}`;
+    
+    // Time
+    const timeElem = document.createElement('div');
+    timeElem.className = 'class-time';
+    
+    const clockIcon = document.createElement('span');
+    clockIcon.className = 'clock-icon';
+    timeElem.appendChild(clockIcon);
+    
+    const timeText = document.createElement('span');
+    timeText.textContent = formatTime(classItem.Time) || 'Time not specified';
+    timeElem.appendChild(timeText);
+    
+    // Class name
+    const nameElem = document.createElement('div');
+    nameElem.className = 'class-name';
+    nameElem.textContent = classItem.Class || 'Unnamed Class';
+    
+    // Location
+    const locationElem = document.createElement('div');
+    locationElem.className = 'class-location';
+    locationElem.textContent = classItem.Location || 'Location not specified';
+    
+    // Add main elements to card
+    card.appendChild(timeElem);
+    card.appendChild(nameElem);
+    card.appendChild(locationElem);
+    
+    // Add detailed information section (initially hidden)
+    const detailsElem = document.createElement('div');
+    detailsElem.className = 'class-details';
+    
+    // Add detailed information - handle potential nulls
+    const discipline = classItem.Discipline || 'Not specified';
+    const giNoGi = classItem['Gi / No Gi'] || '';
+    const details = classItem.Details || '';
+    
+    // Build HTML content
+    let detailsHTML = `<div><strong>Discipline:</strong> ${discipline}</div>`;
+    
+    if (giNoGi) {
+      detailsHTML += `<div><strong>Gi/NoGi:</strong> ${giNoGi}</div>`;
+    }
+    
+    if (details) {
+      detailsHTML += `<div><strong>Details:</strong> ${details}</div>`;
+    }
+    
+    detailsElem.innerHTML = detailsHTML;
+    card.appendChild(detailsElem);
+    
+    // Add click event for expand/collapse
+    card.addEventListener('click', function() {
+      this.classList.toggle('expanded');
+    });
+    
+    return card;
+  } catch (error) {
+    console.error('Error creating class card:', error, classItem);
+    // Return empty div as fallback
+    return document.createElement('div');
+  }
 }
 
 // Show error message
