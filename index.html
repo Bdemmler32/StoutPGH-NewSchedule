@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoutPGH Weekly Class Schedule</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Include SheetJS library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>StoutPGH Weekly Class Schedule</h1>
+    
+    <div class="filters-container">
+      <!-- Location filters -->
+      <div class="filter-section">
+        <h3>Locations:</h3>
+        <div id="location-buttons" class="button-group"></div>
+      </div>
+    
+    <!-- Schedule grid -->
+    <div class="schedule-container">
+      <div id="schedule-grid" class="schedule-grid">
+        <!-- Day headers and schedule will be populated by JavaScript -->
+      </div>
+    </div>
+    
+    <!-- Error display -->
+    <div id="error-message" class="error-message"></div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div id="last-updated">Last updated: Never</div>
+      <button id="refresh-button" class="refresh-button">Refresh Schedule</button>
+    </div>
+  </div>
+  
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
+      
+      <!-- Program filters -->
+      <div class="filter-section">
+        <h3>Program Types:</h3>
+        <div id="program-buttons" class="button-group"></div>
+      </div>
+      
+      <!-- Expand/Collapse toggle section -->
+      <div class="toggle-section">
+        <div class="slider-container">
+          <span class="slider-label">Collapse</span>
+          <label class="toggle-slider">
+            <input type="checkbox" id="expandCollapseToggle">
+            <span class="slider"></span>
+          </label>
+          <span class="slider-label">Expand</span>
+        </div>
+      </div>
+    </div>
