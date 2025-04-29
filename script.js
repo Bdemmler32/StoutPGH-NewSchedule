@@ -269,18 +269,23 @@ function formatTime(time) {
 function timeToMinutes(timeStr) {
   if (!timeStr) return 0;
   
+  // Ensure we're working with a string
+  const timeString = String(timeStr);
+  
   let hours = 0;
   let minutes = 0;
   let isPM = false;
   
   // Check if time is in 12-hour format with AM/PM
-  if (timeStr.includes('AM') || timeStr.includes('PM')) {
-    isPM = timeStr.includes('PM');
-    const timePart = timeStr.replace(/\s*(AM|PM).*/, '');
+  if (timeString.includes('AM') || timeString.includes('PM')) {
+    isPM = timeString.includes('PM');
+    const timePart = timeString.replace(/\s*(AM|PM).*/, '');
     if (timePart.includes(':')) {
-      [hours, minutes] = timePart.split(':').map(num => parseInt(num, 10));
+      const parts = timePart.split(':');
+      hours = parseInt(parts[0], 10) || 0;
+      minutes = parseInt(parts[1], 10) || 0;
     } else {
-      hours = parseInt(timePart, 10);
+      hours = parseInt(timePart, 10) || 0;
     }
     
     // Adjust for PM
@@ -293,8 +298,10 @@ function timeToMinutes(timeStr) {
     }
   } 
   // Handle 24-hour format
-  else if (timeStr.includes(':')) {
-    [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
+  else if (timeString.includes(':')) {
+    const parts = timeString.split(':');
+    hours = parseInt(parts[0], 10) || 0;
+    minutes = parseInt(parts[1], 10) || 0;
   }
   
   return hours * 60 + minutes;
