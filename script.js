@@ -28,6 +28,7 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 // DOM Elements
 const locationButtonsContainer = document.getElementById('location-buttons');
 const programButtonsContainer = document.getElementById('program-buttons');
+const dayButtonsContainer = document.getElementById('day-buttons');
 const scheduleContainer = document.getElementById('schedule-container');
 const scheduleGrid = document.getElementById('schedule-grid');
 const errorMessage = document.getElementById('error-message');
@@ -61,6 +62,7 @@ function createDesktopLayout() {
   days.forEach(day => {
     const dayHeader = document.createElement('div');
     dayHeader.className = 'day-header';
+    dayHeader.id = `desktop-header-${day.toLowerCase()}`;
     dayHeader.textContent = day;
     scheduleGrid.appendChild(dayHeader);
   });
@@ -90,6 +92,7 @@ function createMobileLayout() {
     // Create day header
     const dayHeader = document.createElement('div');
     dayHeader.className = 'day-header';
+    dayHeader.id = `mobile-header-${day.toLowerCase()}`;
     dayHeader.textContent = day;
     daySection.appendChild(dayHeader);
     
@@ -105,6 +108,39 @@ function createMobileLayout() {
   
   // Add mobile sections to container
   scheduleContainer.appendChild(mobileSections);
+}
+
+// Create day navigation buttons for mobile view
+function createDayNavigationButtons() {
+  // Make sure we have a container
+  if (!dayButtonsContainer) return;
+  
+  dayButtonsContainer.innerHTML = '';
+  
+  // Create a button for each day
+  days.forEach(day => {
+    const button = document.createElement('button');
+    button.className = 'filter-button';
+    button.textContent = day.substring(0, 3); // First 3 letters of the day
+    
+    // Add click event for smooth scrolling to that day section
+    button.addEventListener('click', () => {
+      // Find the target section based on screen size
+      const isMobile = window.innerWidth < 1110;
+      const targetId = isMobile 
+        ? `mobile-header-${day.toLowerCase()}`
+        : `desktop-header-${day.toLowerCase()}`;
+      
+      const targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        // Smooth scroll to the target
+        targetElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+    
+    dayButtonsContainer.appendChild(button);
+  });
 }
 
 // Fetch data from Excel file
@@ -222,6 +258,7 @@ function processData(data, updateDate) {
     // Render UI components
     renderLocationButtons();
     renderProgramButtons();
+    createDayNavigationButtons();
     renderSchedule();
   } catch (error) {
     console.error('Error processing data:', error);
@@ -414,15 +451,11 @@ function renderSchedule() {
         dayClasses.forEach(classItem => {
           try {
             // Create class card for desktop
-            const desktopCard = createClassCard(classItem);
+            const desktopCard = createClassCard(classItem, false);
             dayColumn.appendChild(desktopCard);
             
-            // Create class card for mobile (clone desktop card)
-            const mobileCard = desktopCard.cloneNode(true);
-            // Re-add click event for the clone
-            mobileCard.addEventListener('click', function() {
-              this.classList.toggle('expanded');
-            });
+            // Create class card for mobile (with mobile layout)
+            const mobileCard = createClassCard(classItem, true);
             mobileDayContent.appendChild(mobileCard);
           } catch (error) {
             console.error('Error creating class card:', error, classItem);
@@ -437,36 +470,73 @@ function renderSchedule() {
 }
 
 // Create a class card element
-function createClassCard(classItem) {
+function createClassCard(classItem, isMobile) {
   const card = document.createElement('div');
   card.className = `class-card ${getCategoryClass(classItem)}`;
   
-  // Time
-  const timeElem = document.createElement('div');
-  timeElem.className = 'class-time';
-  
-  const clockIcon = document.createElement('span');
-  clockIcon.className = 'clock-icon';
-  timeElem.appendChild(clockIcon);
-  
-  const timeText = document.createElement('span');
-  timeText.textContent = classItem.Time || '';
-  timeElem.appendChild(timeText);
-  
-  // Class name
-  const nameElem = document.createElement('div');
-  nameElem.className = 'class-name';
-  nameElem.textContent = classItem.Class || '';
-  
-  // Location
-  const locationElem = document.createElement('div');
-  locationElem.className = 'class-location';
-  locationElem.textContent = classItem.Location || '';
-  
-  // Add main elements to card
-  card.appendChild(timeElem);
-  card.appendChild(nameElem);
-  card.appendChild(locationElem);
+  if (isMobile) {
+    // Mobile layout: Time and Class on the same line
+    const headerRow = document.createElement('div');
+    headerRow.className = 'class-header';
+    
+    // Time with clock icon
+    const timeElem = document.createElement('div');
+    timeElem.className = 'class-time';
+    
+    const clockIcon = document.createElement('span');
+    clockIcon.className = 'clock-icon';
+    timeElem.appendChild(clockIcon);
+    
+    const timeText = document.createElement('span');
+    timeText.textContent = classItem.Time || '';
+    timeElem.appendChild(timeText);
+    
+    // Class name
+    const nameElem = document.createElement('div');
+    nameElem.className = 'class-name';
+    nameElem.textContent = classItem.Class || '';
+    
+    // Add time and class name to the header row
+    headerRow.appendChild(timeElem);
+    headerRow.appendChild(nameElem);
+    
+    // Add header row to the card
+    card.appendChild(headerRow);
+    
+    // Location on its own line
+    const locationElem = document.createElement('div');
+    locationElem.className = 'class-location';
+    locationElem.textContent = classItem.Location || '';
+    card.appendChild(locationElem);
+  } else {
+    // Desktop layout: Time, Class, and Location on separate lines
+    // Time
+    const timeElem = document.createElement('div');
+    timeElem.className = 'class-time';
+    
+    const clockIcon = document.createElement('span');
+    clockIcon.className = 'clock-icon';
+    timeElem.appendChild(clockIcon);
+    
+    const timeText = document.createElement('span');
+    timeText.textContent = classItem.Time || '';
+    timeElem.appendChild(timeText);
+    
+    // Class name
+    const nameElem = document.createElement('div');
+    nameElem.className = 'class-name';
+    nameElem.textContent = classItem.Class || '';
+    
+    // Location
+    const locationElem = document.createElement('div');
+    locationElem.className = 'class-location';
+    locationElem.textContent = classItem.Location || '';
+    
+    // Add elements to card
+    card.appendChild(timeElem);
+    card.appendChild(nameElem);
+    card.appendChild(locationElem);
+  }
   
   // Create details section (hidden by default)
   const details = document.createElement('div');
@@ -476,49 +546,4 @@ function createClassCard(classItem) {
   if (classItem['Gi / No Gi']) {
     const giNoGiRow = document.createElement('div');
     giNoGiRow.className = 'details-row';
-    giNoGiRow.innerHTML = `<span class="details-label">Apparel:</span> ${classItem['Gi / No Gi']}`;
-    details.appendChild(giNoGiRow);
-  }
-  
-  if (classItem.Discipline) {
-    const disciplineRow = document.createElement('div');
-    disciplineRow.className = 'details-row';
-    disciplineRow.innerHTML = `<span class="details-label">Discipline:</span> ${classItem.Discipline}`;
-    details.appendChild(disciplineRow);
-  }
-  
-  if (classItem.Details) {
-    const detailsRow = document.createElement('div');
-    detailsRow.className = 'details-row';
-    detailsRow.innerHTML = `<span class="details-label">Details:</span> ${classItem.Details}`;
-    details.appendChild(detailsRow);
-  }
-  
-  if (classItem.Requisites) {
-    const requisitesRow = document.createElement('div');
-    requisitesRow.className = 'details-row';
-    requisitesRow.innerHTML = `<span class="details-label">Requirements:</span> ${classItem.Requisites}`;
-    details.appendChild(requisitesRow);
-  }
-  
-  // Add details to card (if there are any details to show)
-  if (details.childNodes.length > 0) {
-    card.appendChild(details);
-    
-    // Add click event for expanding/collapsing
-    card.addEventListener('click', function() {
-      this.classList.toggle('expanded');
-    });
-  }
-  
-  return card;
-}
-
-// Show error message
-function showError(message) {
-  errorMessage.textContent = message;
-  errorMessage.classList.add('visible');
-}
-
-// Initialize the application when the DOM is ready
-document.addEventListener('DOMContentLoaded', init);
+    giNoGiRow.innerHTML = `<span class="

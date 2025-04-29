@@ -26,21 +26,26 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
-/* Filters */
+/* Filters - Sticky position */
 .filters-container {
   background-color: #1a1a1a;
   border: 1px solid #333;
   border-radius: 0.375rem;
   padding: 1rem;
   margin-bottom: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .location-filters, 
-.program-filters {
+.program-filters,
+.day-filters {
   margin-bottom: 0.5rem;
 }
 
-.program-filters {
+.program-filters,
+.day-filters {
   margin-top: 0.5rem;
 }
 
@@ -48,6 +53,7 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  justify-content: center; /* Center buttons */
 }
 
 .filter-button {
@@ -98,6 +104,7 @@ h1 {
   font-weight: bold;
   text-align: center;
   border-radius: 0.375rem 0.375rem 0 0;
+  scroll-margin-top: 15rem; /* Space for sticky header when scrolling to anchors */
 }
 
 .day-column {
@@ -116,7 +123,7 @@ h1 {
   font-size: 0.875rem;
 }
 
-/* Class cards */
+/* Class cards - Desktop */
 .class-card {
   padding: 0.75rem;
   margin-bottom: 0.5rem;
@@ -299,6 +306,7 @@ h1 {
     font-weight: bold;
     text-align: center;
     border-radius: 0.375rem 0.375rem 0 0;
+    scroll-margin-top: 15rem; /* Space for sticky header when scrolling to anchors */
   }
   
   /* Style the day content container */
@@ -319,6 +327,27 @@ h1 {
   /* Class cards should take full width */
   .class-card {
     width: 100%;
+  }
+  
+  /* Mobile class card layout with time and name on same line */
+  .class-card .class-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+  }
+  
+  .class-card .class-time {
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+  }
+  
+  .class-card .class-name {
+    flex: 1;
+  }
+  
+  /* Adjust sticky header padding for mobile */
+  .filters-container {
+    padding: 0.75rem;
   }
 }
 
@@ -342,6 +371,7 @@ h1 {
   
   .filters-container {
     display: none !important;
+    position: static;
   }
   
   .day-section, .schedule-grid {
