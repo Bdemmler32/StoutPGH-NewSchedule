@@ -79,7 +79,7 @@ h3 {
 .toggle-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 }
 
 .toggle-label {
@@ -87,7 +87,6 @@ h3 {
   display: inline-flex;
   align-items: center;
   cursor: pointer;
-  margin: 0 40px;
 }
 
 .toggle-label input {
@@ -106,16 +105,16 @@ h3 {
 .toggle-label::before {
   content: 'Collapse';
   position: absolute;
-  left: -40px;
-  font-size: 0.75rem;
+  left: -60px;
+  font-size: 0.875rem;
   color: #999;
 }
 
 .toggle-label::after {
   content: 'Expand';
   position: absolute;
-  right: -35px;
-  font-size: 0.75rem;
+  right: -55px;
+  font-size: 0.875rem;
   color: #999;
 }
 
@@ -152,6 +151,82 @@ h3 {
 }
 
 .toggle-label input:checked + .toggle-text::after {
+  transform: translateX(20px);
+  background-color: #000;
+}
+
+/* Gi/NoGi Toggle */
+.gi-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gi-toggle-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.gi-toggle-label input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.gi-toggle-text {
+  display: none;
+}
+
+.gi-toggle-label::before {
+  content: 'Gi';
+  position: absolute;
+  left: -30px;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.gi-toggle-label::after {
+  content: 'No Gi';
+  position: absolute;
+  right: -45px;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.gi-toggle-label input + .gi-toggle-text::before {
+  content: '';
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 18px;
+  background-color: #333;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+  border: 1px solid #444;
+}
+
+.gi-toggle-label input + .gi-toggle-text::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  background-color: #ccc;
+  border-radius: 50%;
+  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.gi-toggle-label input:checked + .gi-toggle-text::before {
+  background-color: #f7b500;
+  border-color: #f7b500;
+}
+
+.gi-toggle-label input:checked + .gi-toggle-text::after {
   transform: translateX(20px);
   background-color: #000;
 }
@@ -380,11 +455,30 @@ h3 {
   .day-header {
     border-radius: 0.375rem 0.375rem 0 0;
     width: 100%;
+    margin-top: 1rem;
+    background-color: #333;
+    color: #fff;
+    font-weight: bold;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+  
+  .day-header:first-of-type {
+    margin-top: 0;
   }
   
   .day-column {
     width: 100%;
     border-radius: 0 0 0.375rem 0.375rem;
+    min-height: auto;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+  }
+  
+  .class-card {
+    margin-bottom: 0.5rem;
+    border-radius: 0.375rem;
   }
 }
 

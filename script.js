@@ -39,9 +39,11 @@ const giToggleContainer = document.createElement('div');
 giToggleContainer.className = 'filter-section';
 giToggleContainer.innerHTML = `
   <h3>Gi / No Gi:</h3>
-  <div class="button-group">
-    <button id="gi-toggle" class="filter-button active">Gi</button>
-    <button id="nogi-toggle" class="filter-button active">No Gi</button>
+  <div class="gi-toggle-container">
+    <label for="giNoGiToggle" class="gi-toggle-label">
+      <input type="checkbox" id="giNoGiToggle" checked>
+      <span class="gi-toggle-text">Gi/No Gi</span>
+    </label>
   </div>
 `;
 
@@ -58,19 +60,27 @@ function init() {
   const expandToggleSection = document.querySelector('.filters-container .filter-section:last-child');
   filtersContainer.insertBefore(giToggleContainer, expandToggleSection);
   
-  // Setup Gi/NoGi toggle buttons
-  const giToggle = document.getElementById('gi-toggle');
-  const noGiToggle = document.getElementById('nogi-toggle');
+  // Setup Gi/NoGi toggle
+  const giNoGiToggle = document.getElementById('giNoGiToggle');
   
-  giToggle.addEventListener('click', () => {
-    showGiClasses = !showGiClasses;
-    giToggle.classList.toggle('active');
-    renderSchedule();
-  });
-  
-  noGiToggle.addEventListener('click', () => {
-    showNoGiClasses = !showNoGiClasses;
-    noGiToggle.classList.toggle('active');
+  giNoGiToggle.addEventListener('change', function() {
+    if (this.checked) {
+      // Show both Gi and No Gi
+      showGiClasses = true;
+      showNoGiClasses = true;
+    } else {
+      // Show only Gi (or toggle between Gi and No Gi)
+      if (showGiClasses && showNoGiClasses) {
+        showGiClasses = true;
+        showNoGiClasses = false;
+      } else if (showGiClasses && !showNoGiClasses) {
+        showGiClasses = false;
+        showNoGiClasses = true;
+      } else {
+        showGiClasses = true;
+        showNoGiClasses = true;
+      }
+    }
     renderSchedule();
   });
   
