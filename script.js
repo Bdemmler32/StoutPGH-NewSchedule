@@ -546,4 +546,49 @@ function createClassCard(classItem, isMobile) {
   if (classItem['Gi / No Gi']) {
     const giNoGiRow = document.createElement('div');
     giNoGiRow.className = 'details-row';
-    giNoGiRow.innerHTML = `<span class="
+    giNoGiRow.innerHTML = `<span class="details-label">Apparel:</span> ${classItem['Gi / No Gi']}`;
+    details.appendChild(giNoGiRow);
+  }
+  
+  if (classItem.Discipline) {
+    const disciplineRow = document.createElement('div');
+    disciplineRow.className = 'details-row';
+    disciplineRow.innerHTML = `<span class="details-label">Discipline:</span> ${classItem.Discipline}`;
+    details.appendChild(disciplineRow);
+  }
+  
+  if (classItem.Details) {
+    const detailsRow = document.createElement('div');
+    detailsRow.className = 'details-row';
+    detailsRow.innerHTML = `<span class="details-label">Details:</span> ${classItem.Details}`;
+    details.appendChild(detailsRow);
+  }
+  
+  if (classItem.Requisites) {
+    const requisitesRow = document.createElement('div');
+    requisitesRow.className = 'details-row';
+    requisitesRow.innerHTML = `<span class="details-label">Requirements:</span> ${classItem.Requisites}`;
+    details.appendChild(requisitesRow);
+  }
+  
+  // Add details to card (if there are any details to show)
+  if (details.childNodes.length > 0) {
+    card.appendChild(details);
+    
+    // Add click event for expanding/collapsing
+    card.addEventListener('click', function() {
+      this.classList.toggle('expanded');
+    });
+  }
+  
+  return card;
+}
+
+// Show error message
+function showError(message) {
+  errorMessage.textContent = message;
+  errorMessage.classList.add('visible');
+}
+
+// Initialize the application when the DOM is ready
+document.addEventListener('DOMContentLoaded', init);
