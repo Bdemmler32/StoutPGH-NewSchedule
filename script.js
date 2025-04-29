@@ -6,19 +6,19 @@ let activePrograms = [];
 
 // Program to discipline mapping
 const programMap = {
-  'Adult BJJ': ['Adult Brazilian Jiu Jitsu'],
-  'Adult Striking': ['Adult Striking'],
-  'Youth Classes': ['Youth Jiu Jitsu', 'Youth Striking'],
-  'MMA Classes': ['Mixed Martial Arts'],
+  'BJJ': ['Adult Brazilian Jiu Jitsu'],
+  'Striking': ['Adult Striking'],
+  'Youth': ['Youth Jiu Jitsu', 'Youth Striking'],
+  'MMA': ['Mixed Martial Arts'],
   'Self-Defense': ['Self Defense']
 };
 
 // Category to class mapping
 const categoryStyles = {
-  'Adult BJJ': 'bjj',
-  'Adult Striking': 'striking',
-  'Youth Classes': 'youth',
-  'MMA Classes': 'mma',
+  'BJJ': 'bjj',
+  'Striking': 'striking',
+  'Youth': 'youth',
+  'MMA': 'mma',
   'Self-Defense': 'selfdefense'
 };
 
@@ -278,7 +278,7 @@ function getCategoryClass(classItem) {
   return categoryClass;
 }
 
-// Convert time to minutes for sorting (now handles all formats safely)
+// Convert time to minutes for sorting
 function timeToMinutes(timeStr) {
   try {
     if (!timeStr) return 0;
@@ -399,42 +399,47 @@ function createClassCard(classItem) {
   card.appendChild(nameElem);
   card.appendChild(locationElem);
   
-  // Create details section
-  if (classItem['Gi / No Gi'] || classItem.Discipline || classItem.Details || classItem.Requisites) {
-    const details = document.createElement('div');
-    details.className = 'class-details';
-    
-    // Add details content
-    if (classItem['Gi / No Gi']) {
-      const giNoGiRow = document.createElement('div');
-      giNoGiRow.className = 'details-row';
-      giNoGiRow.innerHTML = `<span class="details-label">Apparel:</span> ${classItem['Gi / No Gi']}`;
-      details.appendChild(giNoGiRow);
-    }
-    
-    if (classItem.Discipline) {
-      const disciplineRow = document.createElement('div');
-      disciplineRow.className = 'details-row';
-      disciplineRow.innerHTML = `<span class="details-label">Discipline:</span> ${classItem.Discipline}`;
-      details.appendChild(disciplineRow);
-    }
-    
-    if (classItem.Details) {
-      const detailsRow = document.createElement('div');
-      detailsRow.className = 'details-row';
-      detailsRow.innerHTML = `<span class="details-label">Details:</span> ${classItem.Details}`;
-      details.appendChild(detailsRow);
-    }
-    
-    if (classItem.Requisites) {
-      const requisitesRow = document.createElement('div');
-      requisitesRow.className = 'details-row';
-      requisitesRow.innerHTML = `<span class="details-label">Requirements:</span> ${classItem.Requisites}`;
-      details.appendChild(requisitesRow);
-    }
-    
-    // Add details to card
+  // Create details section (hidden by default)
+  const details = document.createElement('div');
+  details.className = 'class-details';
+  
+  // Add details content
+  if (classItem['Gi / No Gi']) {
+    const giNoGiRow = document.createElement('div');
+    giNoGiRow.className = 'details-row';
+    giNoGiRow.innerHTML = `<span class="details-label">Apparel:</span> ${classItem['Gi / No Gi']}`;
+    details.appendChild(giNoGiRow);
+  }
+  
+  if (classItem.Discipline) {
+    const disciplineRow = document.createElement('div');
+    disciplineRow.className = 'details-row';
+    disciplineRow.innerHTML = `<span class="details-label">Discipline:</span> ${classItem.Discipline}`;
+    details.appendChild(disciplineRow);
+  }
+  
+  if (classItem.Details) {
+    const detailsRow = document.createElement('div');
+    detailsRow.className = 'details-row';
+    detailsRow.innerHTML = `<span class="details-label">Details:</span> ${classItem.Details}`;
+    details.appendChild(detailsRow);
+  }
+  
+  if (classItem.Requisites) {
+    const requisitesRow = document.createElement('div');
+    requisitesRow.className = 'details-row';
+    requisitesRow.innerHTML = `<span class="details-label">Requirements:</span> ${classItem.Requisites}`;
+    details.appendChild(requisitesRow);
+  }
+  
+  // Add details to card (if there are any details to show)
+  if (details.childNodes.length > 0) {
     card.appendChild(details);
+    
+    // Add click event for expanding/collapsing
+    card.addEventListener('click', function() {
+      this.classList.toggle('expanded');
+    });
   }
   
   return card;
