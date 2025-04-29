@@ -5,15 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StoutPGH Weekly Class Schedule</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <meta name="description" content="View the weekly class schedule for StoutPGH martial arts including BJJ, Striking, MMA, and Youth programs across all Pittsburgh locations.">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>StoutPGH Weekly Class Schedule</h1>
-      <p class="subtitle">Find your next training session across all Pittsburgh locations</p>
-    </header>
+    <h1>StoutPGH Weekly Class Schedule</h1>
     
     <div class="filters-container">
       <!-- Location filters -->
@@ -27,40 +23,16 @@
         <h3>Program Types:</h3>
         <div id="program-buttons" class="button-group"></div>
       </div>
-
-      <!-- Additional filters -->
+      
+      <!-- Expand/Collapse toggle -->
       <div class="filter-section">
-        <h3>Additional Filters:</h3>
-        <div class="checkbox-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="gi-filter"> Gi Classes
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="nogi-filter"> No-Gi Classes
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="beginners-filter"> Beginners Welcome
+        <div class="toggle-container">
+          <label for="expandCollapseToggle" class="toggle-label">
+            <input type="checkbox" id="expandCollapseToggle">
+            <span class="toggle-text">Expand All Details</span>
           </label>
         </div>
       </div>
-    </div>
-    
-    <!-- Time filter range -->
-    <div class="time-filter">
-      <h3>Time Range:</h3>
-      <div class="time-slider-container">
-        <input type="range" id="start-time-slider" min="0" max="24" value="0" step="0.5">
-        <input type="range" id="end-time-slider" min="0" max="24" value="24" step="0.5">
-        <div class="time-labels">
-          <span id="start-time-label">12:00 AM</span>
-          <span id="end-time-label">11:59 PM</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Class count indicator -->
-    <div class="class-count">
-      Showing <span id="visible-class-count">0</span> of <span id="total-class-count">0</span> classes
     </div>
     
     <!-- Schedule grid -->
@@ -70,25 +42,20 @@
       </div>
     </div>
     
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <div>Loading schedule...</div>
+    </div>
+    
     <!-- Error display -->
     <div id="error-message" class="error-message"></div>
     
     <!-- Footer -->
     <div class="footer">
       <div id="last-updated">Last updated: Never</div>
-      <div class="footer-buttons">
-        <button id="print-button" class="secondary-button" title="Print Schedule">
-          <span class="icon print-icon"></span> Print
-        </button>
-        <button id="refresh-button" class="primary-button">
-          <span class="icon refresh-icon"></span> Refresh Schedule
-        </button>
-      </div>
     </div>
   </div>
-  
-  <!-- Tooltip container -->
-  <div id="tooltip" class="tooltip hidden"></div>
   
   <!-- JavaScript -->
   <script src="script.js"></script>
