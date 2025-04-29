@@ -28,6 +28,7 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 // DOM Elements
 const locationButtonsContainer = document.getElementById('location-buttons');
 const programButtonsContainer = document.getElementById('program-buttons');
+const scheduleContainer = document.getElementById('schedule-container');
 const scheduleGrid = document.getElementById('schedule-grid');
 const errorMessage = document.getElementById('error-message');
 const lastUpdated = document.getElementById('last-updated');
@@ -35,18 +36,27 @@ const loading = document.getElementById('loading');
 
 // Initialize application
 function init() {
-  // Create day headers for the schedule grid
-  createDayHeaders();
+  // Create schedule layout for both desktop and mobile
+  createScheduleLayout();
   
   // Fetch data
   fetchExcelData();
 }
 
-// Create day headers for the schedule grid
-function createDayHeaders() {
+// Create schedule layout for both desktop and mobile
+function createScheduleLayout() {
   // Clear any existing content
   scheduleGrid.innerHTML = '';
   
+  // Create desktop layout
+  createDesktopLayout();
+  
+  // Create mobile layout
+  createMobileLayout();
+}
+
+// Create desktop layout with 7 columns
+function createDesktopLayout() {
   // Add day headers
   days.forEach(day => {
     const dayHeader = document.createElement('div');
@@ -62,6 +72,39 @@ function createDayHeaders() {
     dayColumn.id = `day-${day.toLowerCase()}`;
     scheduleGrid.appendChild(dayColumn);
   });
+}
+
+// Create mobile layout with day sections
+function createMobileLayout() {
+  // Create a container for mobile sections
+  const mobileSections = document.createElement('div');
+  mobileSections.id = 'mobile-sections';
+  
+  // Add day sections
+  days.forEach(day => {
+    // Create day section
+    const daySection = document.createElement('div');
+    daySection.className = 'day-section';
+    daySection.id = `mobile-${day.toLowerCase()}`;
+    
+    // Create day header
+    const dayHeader = document.createElement('div');
+    dayHeader.className = 'day-header';
+    dayHeader.textContent = day;
+    daySection.appendChild(dayHeader);
+    
+    // Create day content container
+    const dayContent = document.createElement('div');
+    dayContent.className = 'day-content';
+    dayContent.id = `mobile-content-${day.toLowerCase()}`;
+    daySection.appendChild(dayContent);
+    
+    // Add day section to mobile sections
+    mobileSections.appendChild(daySection);
+  });
+  
+  // Add mobile sections to container
+  scheduleContainer.appendChild(mobileSections);
 }
 
 // Fetch data from Excel file
@@ -324,18 +367,28 @@ function timeToMinutes(timeStr) {
 // Render the schedule
 function renderSchedule() {
   try {
-    // Clear existing classes
+    // Clear existing classes in desktop layout
     days.forEach(day => {
       const dayColumn = document.getElementById(`day-${day.toLowerCase()}`);
       if (dayColumn) {
         dayColumn.innerHTML = '';
       }
+      
+      // Clear mobile content
+      const mobileDayContent = document.getElementById(`mobile-content-${day.toLowerCase()}`);
+      if (mobileDayContent) {
+        mobileDayContent.innerHTML = '';
+      }
     });
     
-    // Populate each day
+    // Populate each day in desktop and mobile layouts
     days.forEach(day => {
+      // Get desktop column
       const dayColumn = document.getElementById(`day-${day.toLowerCase()}`);
-      if (!dayColumn) return;
+      // Get mobile content container
+      const mobileDayContent = document.getElementById(`mobile-content-${day.toLowerCase()}`);
+      
+      if (!dayColumn || !mobileDayContent) return;
       
       // Filter classes for this day and apply filters
       const dayClasses = classes
@@ -346,15 +399,31 @@ function renderSchedule() {
         });
       
       if (dayClasses.length === 0) {
-        const noClasses = document.createElement('div');
-        noClasses.className = 'no-classes';
-        noClasses.textContent = 'No classes';
-        dayColumn.appendChild(noClasses);
+        // No classes message for desktop
+        const noClassesDesktop = document.createElement('div');
+        noClassesDesktop.className = 'no-classes';
+        noClassesDesktop.textContent = 'No classes';
+        dayColumn.appendChild(noClassesDesktop);
+        
+        // No classes message for mobile
+        const noClassesMobile = document.createElement('div');
+        noClassesMobile.className = 'no-classes';
+        noClassesMobile.textContent = 'No classes';
+        mobileDayContent.appendChild(noClassesMobile);
       } else {
         dayClasses.forEach(classItem => {
           try {
-            const classCard = createClassCard(classItem);
-            dayColumn.appendChild(classCard);
+            // Create class card for desktop
+            const desktopCard = createClassCard(classItem);
+            dayColumn.appendChild(desktopCard);
+            
+            // Create class card for mobile (clone desktop card)
+            const mobileCard = desktopCard.cloneNode(true);
+            // Re-add click event for the clone
+            mobileCard.addEventListener('click', function() {
+              this.classList.toggle('expanded');
+            });
+            mobileDayContent.appendChild(mobileCard);
           } catch (error) {
             console.error('Error creating class card:', error, classItem);
           }

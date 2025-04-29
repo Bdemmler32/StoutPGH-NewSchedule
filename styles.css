@@ -78,16 +78,17 @@ h1 {
   margin: 0.75rem 0;
 }
 
-/* Schedule grid */
+/* Schedule container */
 .schedule-container {
-  overflow-x: auto;
+  width: 100%;
 }
 
+/* Schedule grid for desktop */
 .schedule-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
-  min-width: 100%;
+  width: 100%;
 }
 
 .day-header {
@@ -270,41 +271,58 @@ h1 {
   display: block;
 }
 
-/* Responsive design */
+/* Day section for mobile view */
+.day-section {
+  margin-bottom: 1rem;
+  display: none; /* Hidden by default, shown in mobile view */
+}
+
+/* Responsive design - Mobile layout */
 @media (max-width: 1110px) {
-  /* Change to single column layout */
+  /* Hide the desktop grid layout */
   .schedule-grid {
+    display: none !important;
+  }
+  
+  /* Show the mobile day sections */
+  .day-section {
     display: block;
     width: 100%;
   }
   
-  .day-header {
-    display: block;
+  /* Style the day headers for mobile */
+  .day-section .day-header {
     width: 100%;
-    margin-top: 1rem;
     background-color: #f7b500;
     color: #000;
     padding: 0.5rem;
+    font-weight: bold;
     text-align: center;
     border-radius: 0.375rem 0.375rem 0 0;
   }
   
-  .day-header:first-child {
-    margin-top: 0;
-  }
-  
-  .day-column {
-    display: block;
-    width: 100%;
+  /* Style the day content container */
+  .day-content {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
     border-radius: 0 0 0.375rem 0.375rem;
+    padding: 0.5rem;
+    width: 100%;
   }
   
+  /* Container should not overflow horizontally */
+  .schedule-container {
+    overflow-x: visible;
+    width: 100%;
+  }
+  
+  /* Class cards should take full width */
   .class-card {
     width: 100%;
   }
 }
 
-/* Mobile adjustments */
+/* Additional mobile adjustments */
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -326,7 +344,7 @@ h1 {
     display: none !important;
   }
   
-  .schedule-grid {
+  .day-section, .schedule-grid {
     border: 1px solid #ccc;
   }
   
@@ -335,7 +353,7 @@ h1 {
     border: 1px solid #ccc;
   }
   
-  .day-column {
+  .day-content, .day-column {
     background-color: white;
     border: 1px solid #ccc;
   }
