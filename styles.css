@@ -87,6 +87,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   cursor: pointer;
+  margin: 0 40px;
 }
 
 .toggle-label input {
@@ -96,16 +97,16 @@ h3 {
   height: 0;
 }
 
+/* Hide the default toggle-text */
 .toggle-text {
-  margin-left: 10px;
-  font-size: 0.875rem;
+  display: none;
 }
 
 /* The toggle track */
 .toggle-label::before {
   content: 'Collapse';
   position: absolute;
-  left: -65px;
+  left: -40px;
   font-size: 0.75rem;
   color: #999;
 }
@@ -113,7 +114,7 @@ h3 {
 .toggle-label::after {
   content: 'Expand';
   position: absolute;
-  right: -55px;
+  right: -35px;
   font-size: 0.75rem;
   color: #999;
 }
@@ -123,10 +124,9 @@ h3 {
   position: relative;
   display: inline-block;
   width: 36px;
-  height: 20px;
+  height: 18px;
   background-color: #333;
   border-radius: 10px;
-  margin-right: 0.5rem;
   transition: background-color 0.2s;
   border: 1px solid #444;
 }
@@ -137,8 +137,8 @@ h3 {
   position: absolute;
   left: 2px;
   top: 2px;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   background-color: #ccc;
   border-radius: 50%;
   transition: transform 0.2s, background-color 0.2s;
@@ -152,7 +152,7 @@ h3 {
 }
 
 .toggle-label input:checked + .toggle-text::after {
-  transform: translateX(16px);
+  transform: translateX(20px);
   background-color: #000;
 }
 
@@ -233,7 +233,7 @@ h3 {
 
 .class-location {
   font-size: 0.75rem;
-  color: #999;
+  color: #000; /* Changed to black as requested */
   margin-top: 0.125rem;
 }
 
@@ -250,17 +250,19 @@ h3 {
   max-height: 200px;
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+  border-top: 1px dashed rgba(0, 0, 0, 0.2);
   opacity: 1;
 }
 
 .details-row {
   margin-bottom: 0.25rem;
+  color: #000;
 }
 
 .details-label {
   font-weight: 600;
   margin-right: 0.25rem;
+  color: #000;
 }
 
 /* Category colors */
@@ -323,7 +325,7 @@ h3 {
 /* Footer */
 .footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -375,20 +377,13 @@ h3 {
     gap: 1rem;
   }
   
-  .day-header, .day-column {
+  .day-header {
+    border-radius: 0.375rem 0.375rem 0 0;
     width: 100%;
   }
   
-  .day-header {
-    border-radius: 0.375rem 0.375rem 0 0;
-    margin-top: 1rem;
-  }
-  
-  .day-header:first-child {
-    margin-top: 0;
-  }
-  
   .day-column {
+    width: 100%;
     border-radius: 0 0 0.375rem 0.375rem;
   }
 }
@@ -412,12 +407,12 @@ h3 {
   }
   
   .toggle-label::before {
-    left: -55px;
+    left: -40px;
     font-size: 0.7rem;
   }
   
   .toggle-label::after {
-    right: -45px;
+    right: -35px;
     font-size: 0.7rem;
   }
 }

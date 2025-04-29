@@ -3,6 +3,8 @@ let classes = [];
 let locations = [];
 let selectedLocations = [];
 let activePrograms = [];
+let showGiClasses = true;
+let showNoGiClasses = true;
 
 // Program to discipline mapping
 const programMap = {
@@ -33,6 +35,15 @@ const errorMessage = document.getElementById('error-message');
 const lastUpdated = document.getElementById('last-updated');
 const loading = document.getElementById('loading');
 const expandCollapseToggle = document.getElementById('expandCollapseToggle');
+const giToggleContainer = document.createElement('div');
+giToggleContainer.className = 'filter-section';
+giToggleContainer.innerHTML = `
+  <h3>Gi / No Gi:</h3>
+  <div class="button-group">
+    <button id="gi-toggle" class="filter-button active">Gi</button>
+    <button id="nogi-toggle" class="filter-button active">No Gi</button>
+  </div>
+`;
 
 // Initialize application
 function init() {
@@ -41,6 +52,27 @@ function init() {
   
   // Fetch data
   fetchExcelData();
+  
+  // Add Gi/NoGi filter section after program filters
+  const filtersContainer = document.querySelector('.filters-container');
+  const expandToggleSection = document.querySelector('.filters-container .filter-section:last-child');
+  filtersContainer.insertBefore(giToggleContainer, expandToggleSection);
+  
+  // Setup Gi/NoGi toggle buttons
+  const giToggle = document.getElementById('gi-toggle');
+  const noGiToggle = document.getElementById('nogi-toggle');
+  
+  giToggle.addEventListener('click', () => {
+    showGiClasses = !showGiClasses;
+    giToggle.classList.toggle('active');
+    renderSchedule();
+  });
+  
+  noGiToggle.addEventListener('click', () => {
+    showNoGiClasses = !showNoGiClasses;
+    noGiToggle.classList.toggle('active');
+    renderSchedule();
+  });
   
   // Setup expand/collapse toggle
   expandCollapseToggle.addEventListener('change', function() {
