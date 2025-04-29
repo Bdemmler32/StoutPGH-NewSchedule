@@ -3,8 +3,6 @@ let classes = [];
 let locations = [];
 let selectedLocations = [];
 let activePrograms = [];
-let showGiClasses = true;
-let showNoGiClasses = true;
 
 // Program to discipline mapping
 const programMap = {
@@ -34,18 +32,6 @@ const scheduleGrid = document.getElementById('schedule-grid');
 const errorMessage = document.getElementById('error-message');
 const lastUpdated = document.getElementById('last-updated');
 const loading = document.getElementById('loading');
-const expandCollapseToggle = document.getElementById('expandCollapseToggle');
-const giToggleContainer = document.createElement('div');
-giToggleContainer.className = 'filter-section';
-giToggleContainer.innerHTML = `
-  <h3>Gi / No Gi:</h3>
-  <div class="gi-toggle-container">
-    <label for="giNoGiToggle" class="gi-toggle-label">
-      <input type="checkbox" id="giNoGiToggle" checked>
-      <span class="gi-toggle-text">Gi/No Gi</span>
-    </label>
-  </div>
-`;
 
 // Initialize application
 function init() {
@@ -54,52 +40,13 @@ function init() {
   
   // Fetch data
   fetchExcelData();
-  
-  // Add Gi/NoGi filter section after program filters
-  const filtersContainer = document.querySelector('.filters-container');
-  const expandToggleSection = document.querySelector('.filters-container .filter-section:last-child');
-  filtersContainer.insertBefore(giToggleContainer, expandToggleSection);
-  
-  // Setup Gi/NoGi toggle
-  const giNoGiToggle = document.getElementById('giNoGiToggle');
-  
-  giNoGiToggle.addEventListener('change', function() {
-    if (this.checked) {
-      // Show both Gi and No Gi
-      showGiClasses = true;
-      showNoGiClasses = true;
-    } else {
-      // Show only Gi (or toggle between Gi and No Gi)
-      if (showGiClasses && showNoGiClasses) {
-        showGiClasses = true;
-        showNoGiClasses = false;
-      } else if (showGiClasses && !showNoGiClasses) {
-        showGiClasses = false;
-        showNoGiClasses = true;
-      } else {
-        showGiClasses = true;
-        showNoGiClasses = true;
-      }
-    }
-    renderSchedule();
-  });
-  
-  // Setup expand/collapse toggle
-  expandCollapseToggle.addEventListener('change', function() {
-    const allCards = document.querySelectorAll('.class-card');
-    
-    if (this.checked) {
-      // Expand all cards
-      allCards.forEach(card => card.classList.add('expanded'));
-    } else {
-      // Collapse all cards
-      allCards.forEach(card => card.classList.remove('expanded'));
-    }
-  });
 }
 
 // Create day headers for the schedule grid
 function createDayHeaders() {
+  // Clear any existing content
+  scheduleGrid.innerHTML = '';
+  
   // Add day headers
   days.forEach(day => {
     const dayHeader = document.createElement('div');
@@ -222,8 +169,8 @@ function processData(data, updateDate) {
       selectedLocations = stripDistrict ? [stripDistrict] : locations.length > 0 ? [locations[0]] : [];
     }
     
-    // Update last updated timestamp
-    lastUpdated.textContent = `Last updated: ${updateDate || 'Unknown'}`;
+    // Update last updated timestamp - remove the "Last updated:" text
+    lastUpdated.textContent = updateDate || '';
     
     // Hide loading indicator
     loading.style.display = 'none';
@@ -452,46 +399,43 @@ function createClassCard(classItem) {
   card.appendChild(nameElem);
   card.appendChild(locationElem);
   
-  // Create expandable details section
-  const details = document.createElement('div');
-  details.className = 'class-details';
-  
-  // Add details content
-  if (classItem['Gi / No Gi']) {
-    const giNoGiRow = document.createElement('div');
-    giNoGiRow.className = 'details-row';
-    giNoGiRow.innerHTML = `<span class="details-label">Apparel:</span> ${classItem['Gi / No Gi']}`;
-    details.appendChild(giNoGiRow);
+  // Create details section
+  if (classItem['Gi / No Gi'] || classItem.Discipline || classItem.Details || classItem.Requisites) {
+    const details = document.createElement('div');
+    details.className = 'class-details';
+    
+    // Add details content
+    if (classItem['Gi / No Gi']) {
+      const giNoGiRow = document.createElement('div');
+      giNoGiRow.className = 'details-row';
+      giNoGiRow.innerHTML = `<span class="details-label">Apparel:</span> ${classItem['Gi / No Gi']}`;
+      details.appendChild(giNoGiRow);
+    }
+    
+    if (classItem.Discipline) {
+      const disciplineRow = document.createElement('div');
+      disciplineRow.className = 'details-row';
+      disciplineRow.innerHTML = `<span class="details-label">Discipline:</span> ${classItem.Discipline}`;
+      details.appendChild(disciplineRow);
+    }
+    
+    if (classItem.Details) {
+      const detailsRow = document.createElement('div');
+      detailsRow.className = 'details-row';
+      detailsRow.innerHTML = `<span class="details-label">Details:</span> ${classItem.Details}`;
+      details.appendChild(detailsRow);
+    }
+    
+    if (classItem.Requisites) {
+      const requisitesRow = document.createElement('div');
+      requisitesRow.className = 'details-row';
+      requisitesRow.innerHTML = `<span class="details-label">Requirements:</span> ${classItem.Requisites}`;
+      details.appendChild(requisitesRow);
+    }
+    
+    // Add details to card
+    card.appendChild(details);
   }
-  
-  if (classItem.Discipline) {
-    const disciplineRow = document.createElement('div');
-    disciplineRow.className = 'details-row';
-    disciplineRow.innerHTML = `<span class="details-label">Discipline:</span> ${classItem.Discipline}`;
-    details.appendChild(disciplineRow);
-  }
-  
-  if (classItem.Details) {
-    const detailsRow = document.createElement('div');
-    detailsRow.className = 'details-row';
-    detailsRow.innerHTML = `<span class="details-label">Details:</span> ${classItem.Details}`;
-    details.appendChild(detailsRow);
-  }
-  
-  if (classItem.Requisites) {
-    const requisitesRow = document.createElement('div');
-    requisitesRow.className = 'details-row';
-    requisitesRow.innerHTML = `<span class="details-label">Requirements:</span> ${classItem.Requisites}`;
-    details.appendChild(requisitesRow);
-  }
-  
-  // Add details to card
-  card.appendChild(details);
-  
-  // Add click event for expanding/collapsing
-  card.addEventListener('click', function() {
-    this.classList.toggle('expanded');
-  });
   
   return card;
 }
