@@ -90,7 +90,11 @@ async function fetchExcelData() {
     }
     
     const data = await response.arrayBuffer();
-    const workbook = XLSX.read(new Uint8Array(data), {type: 'array', cellDates: true});
+    const workbook = XLSX.read(new Uint8Array(data), {
+      type: 'array', 
+      cellDates: true,
+      cellText: false
+    });
     
     // Get first sheet
     const firstSheetName = workbook.SheetNames[0];
@@ -101,7 +105,11 @@ async function fetchExcelData() {
     const updateDate = updateDateCell ? updateDateCell.v : '';
     
     // Extract schedule data starting from the header row (row 3)
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, {range: 2});
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      range: 2,
+      raw: false,
+      dateNF: 'h:mm AM/PM'
+    });
     
     // Process data and update UI
     processData(jsonData, updateDate);
@@ -115,40 +123,79 @@ async function fetchExcelData() {
 
 // Process the loaded data
 function processData(data, updateDate) {
-  // Convert Excel data to our expected format
-  classes = data.map(item => ({
-    Class: item.Class || '',
-    Discipline: item['Discipline(s)'] || '',
-    Day: item.Day || '',
-    Time: item.Time || '',
-    Location: item.Location || '',
-    'Gi / No Gi': item['Apparel Format'] || '',
-    Details: item.Details || '',
-    Requisites: item.Requisites || ''
-  }));
-  
-  // Extract unique locations
-  locations = [...new Set(classes
-    .filter(item => item.Location && item.Location.trim() !== '')
-    .map(item => item.Location))];
-  
-  // Set initial selected location to Strip District, if available
-  if (selectedLocations.length === 0) {
-    const stripDistrict = locations.find(loc => loc === 'Strip District');
-    selectedLocations = stripDistrict ? [stripDistrict] : locations.length > 0 ? [locations[0]] : [];
+  try {
+    // Convert Excel data to our expected format
+    classes = data.map(item => {
+      // Pre-format the time to ensure it's a string
+      let formattedTime = '';
+      
+      // Handle time value regardless of its format
+      if (item.Time) {
+        // If it's a date object
+        if (item.Time instanceof Date) {
+          const hours = item.Time.getHours();
+          const minutes = item.Time.getMinutes();
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const hours12 = hours % 12 || 12;
+          const minutesStr = minutes < 10 ? `0${minutes}` : minutes;
+          formattedTime = `${hours12}:${minutesStr} ${ampm}`;
+        }
+        // If it's already a string (possibly from Excel's formatting)
+        else if (typeof item.Time === 'string') {
+          formattedTime = item.Time;
+        }
+        // If it's a number (Excel's internal date format)
+        else if (typeof item.Time === 'number') {
+          // Convert Excel's date number to hours and minutes
+          const totalSeconds = Math.round(item.Time * 86400); // 86400 seconds in a day
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const hours12 = hours % 12 || 12;
+          const minutesStr = minutes < 10 ? `0${minutes}` : minutes;
+          formattedTime = `${hours12}:${minutesStr} ${ampm}`;
+        }
+      }
+      
+      return {
+        Class: item.Class || '',
+        Discipline: item['Discipline(s)'] || '',
+        Day: item.Day || '',
+        Time: formattedTime,
+        Location: item.Location || '',
+        'Gi / No Gi': item['Apparel Format'] || '',
+        Details: item.Details || '',
+        Requisites: item.Requisites || ''
+      };
+    });
+    
+    // Extract unique locations
+    locations = [...new Set(classes
+      .filter(item => item.Location && item.Location.trim() !== '')
+      .map(item => item.Location))];
+    
+    // Set initial selected location to Strip District, if available
+    if (selectedLocations.length === 0) {
+      const stripDistrict = locations.find(loc => loc === 'Strip District');
+      selectedLocations = stripDistrict ? [stripDistrict] : locations.length > 0 ? [locations[0]] : [];
+    }
+    
+    // Update last updated timestamp
+    lastUpdated.textContent = `Last updated: ${updateDate || 'Unknown'}`;
+    
+    // Hide loading indicator
+    loading.style.display = 'none';
+    scheduleGrid.style.display = 'grid';
+    
+    // Render UI components
+    renderLocationButtons();
+    renderProgramButtons();
+    renderSchedule();
+  } catch (error) {
+    console.error('Error processing data:', error);
+    showError(`Error processing schedule data: ${error.message}`);
+    loading.style.display = 'none';
   }
-  
-  // Update last updated timestamp
-  lastUpdated.textContent = `Last updated: ${updateDate || 'Unknown'}`;
-  
-  // Hide loading indicator
-  loading.style.display = 'none';
-  scheduleGrid.style.display = 'grid';
-  
-  // Render UI components
-  renderLocationButtons();
-  renderProgramButtons();
-  renderSchedule();
 }
 
 // Render location filter buttons
@@ -242,100 +289,93 @@ function getCategoryClass(classItem) {
   return categoryClass;
 }
 
-// Format time (handles both "7:30 AM" and "07:30" formats)
-function formatTime(time) {
-  if (!time) return '';
-  
-  // Return the time directly if it already includes AM/PM
-  if (time.includes('AM') || time.includes('PM')) {
-    return time;
-  }
-  
-  // Handle 24-hour format
-  if (time.includes(':')) {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    
-    return `${hour12}:${minutes || '00'} ${ampm}`;
-  }
-  
-  // Return original if can't parse
-  return time;
-}
-
-// Convert time to minutes for sorting
+// Convert time to minutes for sorting (now handles all formats safely)
 function timeToMinutes(timeStr) {
-  if (!timeStr) return 0;
-  
-  // Ensure we're working with a string
-  const timeString = String(timeStr);
-  
-  let hours = 0;
-  let minutes = 0;
-  let isPM = false;
-  
-  // Check if time is in 12-hour format with AM/PM
-  if (timeString.includes('AM') || timeString.includes('PM')) {
-    isPM = timeString.includes('PM');
-    const timePart = timeString.replace(/\s*(AM|PM).*/, '');
-    if (timePart.includes(':')) {
-      const parts = timePart.split(':');
-      hours = parseInt(parts[0], 10) || 0;
-      minutes = parseInt(parts[1], 10) || 0;
-    } else {
-      hours = parseInt(timePart, 10) || 0;
+  try {
+    if (!timeStr) return 0;
+    
+    // We'll work with string representation
+    const timeString = String(timeStr || '').trim();
+    if (!timeString) return 0;
+    
+    let hours = 0;
+    let minutes = 0;
+    let isPM = false;
+    
+    // Match pattern like "6:45 AM" or "6:45:00 AM"
+    const timeMatch = timeString.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)/i);
+    
+    if (timeMatch) {
+      hours = parseInt(timeMatch[1], 10) || 0;
+      minutes = parseInt(timeMatch[2], 10) || 0;
+      isPM = (timeMatch[4] || '').toUpperCase() === 'PM';
+      
+      // Adjust for PM/AM
+      if (isPM && hours < 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+      
+      return hours * 60 + minutes;
     }
     
-    // Adjust for PM
-    if (isPM && hours < 12) {
-      hours += 12;
+    // Try to handle 24-hour format like "18:45"
+    const militaryMatch = timeString.match(/(\d+):(\d+)/);
+    if (militaryMatch) {
+      hours = parseInt(militaryMatch[1], 10) || 0;
+      minutes = parseInt(militaryMatch[2], 10) || 0;
+      return hours * 60 + minutes;
     }
-    // Adjust for 12 AM
-    if (!isPM && hours === 12) {
-      hours = 0;
-    }
-  } 
-  // Handle 24-hour format
-  else if (timeString.includes(':')) {
-    const parts = timeString.split(':');
-    hours = parseInt(parts[0], 10) || 0;
-    minutes = parseInt(parts[1], 10) || 0;
+    
+    return 0;
+  } catch (error) {
+    console.warn('Error parsing time for sorting:', timeStr, error);
+    return 0;
   }
-  
-  return hours * 60 + minutes;
 }
 
 // Render the schedule
 function renderSchedule() {
-  // Clear existing classes
-  days.forEach(day => {
-    const dayColumn = document.getElementById(`day-${day.toLowerCase()}`);
-    dayColumn.innerHTML = '';
-  });
-  
-  // Populate each day
-  days.forEach(day => {
-    const dayColumn = document.getElementById(`day-${day.toLowerCase()}`);
-    const dayClasses = classes.filter(c => c.Day === day && isClassVisible(c))
-      .sort((a, b) => {
-        // Sort by time - convert to minutes for proper chronological order
-        return timeToMinutes(a.Time) - timeToMinutes(b.Time);
-      });
+  try {
+    // Clear existing classes
+    days.forEach(day => {
+      const dayColumn = document.getElementById(`day-${day.toLowerCase()}`);
+      if (dayColumn) {
+        dayColumn.innerHTML = '';
+      }
+    });
     
-    if (dayClasses.length === 0) {
-      const noClasses = document.createElement('div');
-      noClasses.className = 'no-classes';
-      noClasses.textContent = 'No classes';
-      dayColumn.appendChild(noClasses);
-    } else {
-      dayClasses.forEach(classItem => {
-        const classCard = createClassCard(classItem);
-        dayColumn.appendChild(classCard);
-      });
-    }
-  });
+    // Populate each day
+    days.forEach(day => {
+      const dayColumn = document.getElementById(`day-${day.toLowerCase()}`);
+      if (!dayColumn) return;
+      
+      // Filter classes for this day and apply filters
+      const dayClasses = classes
+        .filter(c => c.Day === day && isClassVisible(c))
+        .sort((a, b) => {
+          // Sort by time
+          return timeToMinutes(a.Time) - timeToMinutes(b.Time);
+        });
+      
+      if (dayClasses.length === 0) {
+        const noClasses = document.createElement('div');
+        noClasses.className = 'no-classes';
+        noClasses.textContent = 'No classes';
+        dayColumn.appendChild(noClasses);
+      } else {
+        dayClasses.forEach(classItem => {
+          try {
+            const classCard = createClassCard(classItem);
+            dayColumn.appendChild(classCard);
+          } catch (error) {
+            console.error('Error creating class card:', error, classItem);
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering schedule:', error);
+    showError(`Error displaying schedule: ${error.message}`);
+  }
 }
 
 // Create a class card element
@@ -352,18 +392,18 @@ function createClassCard(classItem) {
   timeElem.appendChild(clockIcon);
   
   const timeText = document.createElement('span');
-  timeText.textContent = formatTime(classItem.Time);
+  timeText.textContent = classItem.Time || '';
   timeElem.appendChild(timeText);
   
   // Class name
   const nameElem = document.createElement('div');
   nameElem.className = 'class-name';
-  nameElem.textContent = classItem.Class;
+  nameElem.textContent = classItem.Class || '';
   
   // Location
   const locationElem = document.createElement('div');
   locationElem.className = 'class-location';
-  locationElem.textContent = classItem.Location;
+  locationElem.textContent = classItem.Location || '';
   
   // Add main elements to card
   card.appendChild(timeElem);
